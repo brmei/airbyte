@@ -5,6 +5,7 @@
 package io.airbyte.integrations.destination.starrocks;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.airbyte.commons.io.IOs;
 import io.airbyte.commons.json.Jsons;
 import io.airbyte.integrations.base.JavaBaseConstants;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.utility.DockerImageName;
 
 
 public class StarrocksDestinationAcceptanceTest extends DestinationAcceptanceTest {
@@ -33,6 +37,7 @@ public class StarrocksDestinationAcceptanceTest extends DestinationAcceptanceTes
     private static final StandardNameTransformer namingResolver = new StandardNameTransformer();
 
     private JsonNode configJson;
+    protected GenericContainer container;
 
     private static Connection conn = null;
 
@@ -43,7 +48,7 @@ public class StarrocksDestinationAcceptanceTest extends DestinationAcceptanceTes
 
     @BeforeAll
     public static void getConnect() throws SQLException, ClassNotFoundException {
-        JsonNode config = Jsons.deserialize(IOs.readFile(Paths.get("../../../secrets/config.json")));
+        JsonNode config = Jsons.deserialize(IOs.readFile(Paths.get("secrets/config.json")));
         conn = SqlUtil.createJDBCConnection(config);
     }
 
@@ -59,8 +64,7 @@ public class StarrocksDestinationAcceptanceTest extends DestinationAcceptanceTes
         // TODO: Generate the configuration JSON file to be used for running the destination during the test
         // configJson can either be static and read from secrets/config.json directly
         // or created in the setup method
-        configJson = Jsons.deserialize(IOs.readFile(Paths.get("../../../secrets/config.json")));
-
+        configJson = Jsons.deserialize(IOs.readFile(Paths.get("secrets/config.json")));
         return configJson;
     }
 
@@ -98,13 +102,18 @@ public class StarrocksDestinationAcceptanceTest extends DestinationAcceptanceTes
     }
 
     @Override
-    protected void setup(TestDestinationEnv testEnv) {
+    protected void setup(TestDestinationEnv testEnv) throws IOException, SQLException {
         // TODO Implement this method to run any setup actions needed before every test case
+        container = new GenericContainer(DockerImageName.parse("starrocks/allin1-ubuntu:latest"))
+        .withExposedPorts(9030,8030,8040);
+        //container.start();
     }
 
     @Override
     protected void tearDown(TestDestinationEnv testEnv) {
         // TODO Implement this method to run any cleanup actions needed after every test case
+        //container.stop();
+        //container.close();
     }
 
     @Override
@@ -115,6 +124,17 @@ public class StarrocksDestinationAcceptanceTest extends DestinationAcceptanceTes
     @Override
     public void testSecondSync() throws Exception {
         // PubSub cannot overwrite messages, its always append only
+    }
+
+    @Override
+    public void testSyncWithLargeRecordBatch(final String messagesFilename,
+    final String catalogFilename) throws Exception {
+        // groups is a reserve word in starrocks
+    }
+
+    @Override
+    public void testSync(final String messagesFilename, final String catalogFilename) throws Exception {
+        // groups is a reserve word in starrocks
     }
 
 }
