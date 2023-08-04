@@ -5,6 +5,7 @@
 package io.airbyte.integrations.destination.starrocks;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.airbyte.commons.io.IOs;
 import io.airbyte.commons.json.Jsons;
 import io.airbyte.integrations.base.JavaBaseConstants;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -63,7 +65,7 @@ public class StarrocksDestinationAcceptanceTest extends DestinationAcceptanceTes
         // configJson can either be static and read from secrets/config.json directly
         // or created in the setup method
         configJson = Jsons.deserialize(IOs.readFile(Paths.get("secrets/config.json")));
-
+        ((ObjectNode)configJson).put("database", "demo");
         return configJson;
     }
 
